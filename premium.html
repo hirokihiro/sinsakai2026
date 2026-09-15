@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubManage Premium | プレミアム機能</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <a class="brand" href="index.html" aria-label="SubManage ホーム">
+                <span class="brand-mark">S</span>
+                <span>
+                    <strong>SubManage</strong>
+                    <small>サブスクを、シンプルに。</small>
+                </span>
+            </a>
+
+            <nav class="side-nav" aria-label="メインナビゲーション">
+                <a href="index.html"><span class="nav-icon">H</span>ダッシュボード</a>
+                <a href="index.html#subscription-section"><span class="nav-icon">L</span>サブスク一覧</a>
+                <a href="index.html#upcoming-section"><span class="nav-icon">C</span>カレンダー</a>
+                <a href="index.html#summary-section"><span class="nav-icon">R</span>統計・レポート</a>
+                <a href="index.html#savings-section"><span class="nav-icon">S</span>節約試算</a>
+                <a class="active" href="premium.html"><span class="nav-icon">P</span>プレミアム</a>
+                <a href="index.html#data-section"><span class="nav-icon">D</span>データ管理</a>
+            </nav>
+
+            <section class="upgrade-panel" aria-label="現在のプラン">
+                <span class="crown">Premium</span>
+                <h2>設定ページ</h2>
+                <p>自動化のON/OFFや通知タイミングを保存できます。</p>
+                <a class="btn btn-secondary" href="index.html">戻る <span aria-hidden="true">-&gt;</span></a>
+            </section>
+        </aside>
+
+        <main class="page-shell premium-page">
+            <header class="topbar">
+                <div class="hero-copy">
+                    <p class="welcome">Premium</p>
+                    <h1>プレミアム機能</h1>
+                    <p>自動取得、通知、レポートを設定して、サブスク管理をさらに使いやすくします。</p>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-action" id="theme-toggle-button" type="button" aria-label="テーマ切替">◐</button>
+                    <a class="btn btn-secondary" href="index.html">ダッシュボードへ</a>
+                </div>
+            </header>
+
+            <section class="panel premium-panel" id="premium-section">
+                <div class="premium-layout">
+                    <div>
+                        <p class="section-label">Automation</p>
+                        <h2>支払い管理を自動化</h2>
+                        <p class="premium-lead">カード明細の取得、更新日の通知、週次レポートの作成をまとめて設定できます。</p>
+                        <div class="premium-feature-list">
+                            <span>自動支出取得</span>
+                            <span>スマート通知</span>
+                            <span>週次レポート</span>
+                        </div>
+                    </div>
+                    <form class="premium-settings" id="premium-form">
+                        <label class="switch-row">
+                            <input type="checkbox" id="auto-sync-toggle">
+                            <span>
+                                <strong>自動支出取得</strong>
+                                <small>カード明細からサブスク候補を検出する想定の機能です。</small>
+                            </span>
+                        </label>
+                        <label class="switch-row">
+                            <input type="checkbox" id="smart-alert-toggle">
+                            <span>
+                                <strong>スマート通知</strong>
+                                <small>更新日、無料体験、予算超過をまとめて通知します。</small>
+                            </span>
+                        </label>
+                        <div class="premium-options">
+                            <label>
+                                通知タイミング
+                                <select id="premium-reminder-days">
+                                    <option value="3">3日前</option>
+                                    <option value="7">7日前</option>
+                                    <option value="14">14日前</option>
+                                </select>
+                            </label>
+                            <label>
+                                週次レポート
+                                <select id="premium-report-day">
+                                    <option value="monday">月曜日</option>
+                                    <option value="friday">金曜日</option>
+                                    <option value="sunday">日曜日</option>
+                                </select>
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" type="submit">設定を保存</button>
+                        <p class="premium-status" id="premium-status">プレミアム設定は未保存です。</p>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/premium.js"></script>
+</body>
+</html>

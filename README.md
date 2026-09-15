@@ -33,11 +33,13 @@ HTML / CSS / JavaScript で作成した、ローカル保存型のサブスク�
 ```text
 sinsakai2026/
 ├── index.html
+├── premium.html
 ├── assets/
 │   ├── css/
 │   │   └── style.css
 │   └── js/
-│       └── app.js
+│       ├── app.js
+│       └── premium.js
 ├── README.md
 └── .gitignore
 ```

@@ -188,7 +188,7 @@ function bindEvents() {
     elements.clearBudgetButton.addEventListener("click", clearBudget);
     elements.exportCsvButton.addEventListener("click", exportCsv);
     elements.importCsvInput.addEventListener("change", importCsv);
-    elements.premiumForm.addEventListener("submit", savePremiumSettings);
+    elements.premiumForm?.addEventListener("submit", savePremiumSettings);
     elements.closeDialogButton.addEventListener("click", closeFormDialog);
     elements.cancelButton.addEventListener("click", closeFormDialog);
     elements.closeDetailButton.addEventListener("click", closeDetailDialog);
@@ -502,7 +502,9 @@ function render() {
     renderUpcoming();
     renderBudgetAlert();
     renderTrialReminders();
-    renderPremiumSettings();
+    if (elements.premiumForm) {
+        renderPremiumSettings();
+    }
     renderSavingsSimulator();
     renderTable(filtered);
 }
