@@ -275,6 +275,9 @@ a {
 }
 
 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 46px;
     padding: 0 18px;
     border-radius: var(--radius);
