@@ -43,6 +43,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="icon-action" type="button" aria-label="通知">!</button>
+                    <button class="icon-action" id="theme-toggle-button" type="button" aria-label="テーマ切替">◐</button>
                     <button class="user-avatar" type="button" aria-label="ユーザー">U</button>
                     <button class="btn btn-primary" id="open-form-button" type="button">＋ 新規登録</button>
                 </div>
@@ -150,14 +151,28 @@
                         <select id="filter-status">
                             <option value="">利用状況を選択</option>
                         </select>
+                        <select id="sort-order">
+                            <option value="renewal-asc">更新日が近い順</option>
+                            <option value="price-desc">料金が高い順</option>
+                            <option value="price-asc">料金が安い順</option>
+                            <option value="name-asc">サービス名順</option>
+                            <option value="category-asc">カテゴリ順</option>
+                        </select>
                         <button class="btn btn-secondary" type="button" id="clear-filter-button">クリア</button>
                     </form>
+                </div>
+                <div class="bulk-toolbar" id="bulk-toolbar">
+                    <span id="bulk-selected-count">0件を選択中</span>
+                    <button class="btn btn-secondary compact-reset" id="bulk-pending-button" type="button">解約予定</button>
+                    <button class="btn btn-secondary compact-reset" id="bulk-cancelled-button" type="button">解約済み</button>
+                    <button class="btn btn-secondary compact-reset" id="bulk-clear-button" type="button">選択解除</button>
                 </div>
 
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
+                                <th aria-label="選択"><input class="row-checkbox" id="select-all-checkbox" type="checkbox"></th>
                                 <th>サービス</th>
                                 <th>カテゴリ</th>
                                 <th>料金</th>
@@ -264,6 +279,11 @@
             </div>
         </div>
     </dialog>
+
+    <div class="toast" id="undo-toast" role="status" aria-live="polite">
+        <span id="undo-message"></span>
+        <button class="btn btn-secondary compact-reset" id="undo-delete-button" type="button">元に戻す</button>
+    </div>
 
     <script src="js/app.js"></script>
 </body>

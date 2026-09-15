@@ -1,5 +1,6 @@
 const STORAGE_KEY = "subscription-manager-items";
 const BUDGET_STORAGE_KEY = "subscription-manager-budget";
+const THEME_STORAGE_KEY = "subscription-manager-theme";
 const CATEGORY_OPTIONS = ["動画", "音楽", "学習", "クラウド", "ゲーム", "ニュース", "制作", "その他"];
 const STATUS_OPTIONS = ["利用中", "解約予定", "解約済み"];
 const BILLING_CYCLE_OPTIONS = [
@@ -66,10 +67,15 @@ const state = {
         category: "",
         status: ""
     },
+    sortOrder: "renewal-asc",
     monthlyBudget: loadBudget(),
     editingId: null,
     detailId: null,
-    savingIds: new Set()
+    savingIds: new Set(),
+    selectedIds: new Set(),
+    lastDeleted: null,
+    undoTimer: null,
+    theme: loadTheme()
 };
 
 const elements = {
@@ -100,9 +106,20 @@ const elements = {
     searchKeyword: document.querySelector("#search-keyword"),
     filterCategory: document.querySelector("#filter-category"),
     filterStatus: document.querySelector("#filter-status"),
+    sortOrder: document.querySelector("#sort-order"),
     clearFilterButton: document.querySelector("#clear-filter-button"),
     openFormButton: document.querySelector("#open-form-button"),
+    themeToggleButton: document.querySelector("#theme-toggle-button"),
     resetSampleButton: document.querySelector("#reset-sample-button"),
+    selectAllCheckbox: document.querySelector("#select-all-checkbox"),
+    bulkToolbar: document.querySelector("#bulk-toolbar"),
+    bulkSelectedCount: document.querySelector("#bulk-selected-count"),
+    bulkPendingButton: document.querySelector("#bulk-pending-button"),
+    bulkCancelledButton: document.querySelector("#bulk-cancelled-button"),
+    bulkClearButton: document.querySelector("#bulk-clear-button"),
+    undoToast: document.querySelector("#undo-toast"),
+    undoMessage: document.querySelector("#undo-message"),
+    undoDeleteButton: document.querySelector("#undo-delete-button"),
     dialog: document.querySelector("#subscription-dialog"),
     dialogTitle: document.querySelector("#dialog-title"),
     closeDialogButton: document.querySelector("#close-dialog-button"),
@@ -138,9 +155,11 @@ const errorElements = {
 initialize();
 
 function initialize() {
+    applyTheme();
     populateSelect(elements.category, CATEGORY_OPTIONS, "選択してください");
     populateSelect(elements.status, STATUS_OPTIONS, "選択してください");
     populateSelect(elements.billingCycle, BILLING_CYCLE_OPTIONS.map((cycle) => cycle.value), "選択してください", false, getBillingCycleLabel);
+    elements.sortOrder.value = state.sortOrder;
     renderFilterOptions();
     bindEvents();
     render();
@@ -148,6 +167,7 @@ function initialize() {
 
 function bindEvents() {
     elements.openFormButton.addEventListener("click", () => openFormDialog());
+    elements.themeToggleButton.addEventListener("click", toggleTheme);
     elements.resetSampleButton.addEventListener("click", resetToSampleData);
     elements.clearSavingsButton.addEventListener("click", clearSavingsSelection);
     elements.budgetForm.addEventListener("submit", handleBudgetSave);
@@ -169,6 +189,11 @@ function bindEvents() {
     elements.filterForm.addEventListener("input", handleFilterChange);
     elements.filterForm.addEventListener("change", handleFilterChange);
     elements.clearFilterButton.addEventListener("click", clearFilters);
+    elements.selectAllCheckbox.addEventListener("change", toggleAllVisibleRows);
+    elements.bulkPendingButton.addEventListener("click", () => bulkUpdateStatus("解約予定"));
+    elements.bulkCancelledButton.addEventListener("click", () => bulkUpdateStatus("解約済み"));
+    elements.bulkClearButton.addEventListener("click", clearSelectedRows);
+    elements.undoDeleteButton.addEventListener("click", undoDelete);
 
     elements.form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -202,6 +227,10 @@ function loadBudget() {
     return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
+function loadTheme() {
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+}
+
 function normalizeSubscription(subscription) {
     return {
         ...subscription,
@@ -221,8 +250,14 @@ function saveBudget() {
     }
 }
 
+function saveTheme() {
+    localStorage.setItem(THEME_STORAGE_KEY, state.theme);
+}
+
 function resetToSampleData() {
     state.subscriptions = [...sampleSubscriptions];
+    state.selectedIds.clear();
+    state.savingIds.clear();
     saveToStorage();
     renderFilterOptions();
     render();
@@ -232,14 +267,17 @@ function handleFilterChange() {
     state.filters.keyword = elements.searchKeyword.value.trim().toLowerCase();
     state.filters.category = elements.filterCategory.value;
     state.filters.status = elements.filterStatus.value;
+    state.sortOrder = elements.sortOrder.value;
     render();
 }
 
 function clearFilters() {
     state.filters = { keyword: "", category: "", status: "" };
+    state.sortOrder = "renewal-asc";
     elements.searchKeyword.value = "";
     elements.filterCategory.value = "";
     elements.filterStatus.value = "";
+    elements.sortOrder.value = state.sortOrder;
     render();
 }
 
@@ -256,6 +294,18 @@ function clearBudget() {
     elements.monthlyBudget.value = "";
     saveBudget();
     renderBudgetAlert();
+}
+
+function toggleTheme() {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    saveTheme();
+    applyTheme();
+}
+
+function applyTheme() {
+    document.body.dataset.theme = state.theme;
+    elements.themeToggleButton.textContent = state.theme === "dark" ? "☀" : "◐";
+    elements.themeToggleButton.setAttribute("aria-label", state.theme === "dark" ? "ライトモードに切替" : "ダークモードに切替");
 }
 
 function openFormDialog(subscription = null) {
@@ -380,7 +430,8 @@ function clearErrors() {
 }
 
 function deleteSubscription(id) {
-    const subscription = state.subscriptions.find((item) => item.id === id);
+    const index = state.subscriptions.findIndex((item) => item.id === id);
+    const subscription = state.subscriptions[index];
     if (!subscription) {
         return;
     }
@@ -390,11 +441,14 @@ function deleteSubscription(id) {
         return;
     }
 
+    state.lastDeleted = { subscription, index };
     state.subscriptions = state.subscriptions.filter((item) => item.id !== id);
     state.savingIds.delete(id);
+    state.selectedIds.delete(id);
     saveToStorage();
     renderFilterOptions();
     render();
+    showUndoToast(subscription.serviceName);
 }
 
 function render() {
@@ -428,7 +482,7 @@ function renderCategoryBreakdown() {
 
     if (activeTotal === 0) {
         elements.categoryChart.style.background = "#eef2f6";
-        elements.categoryList.innerHTML = CATEGORY_OPTIONS.slice(0, 4).map((category) => categoryLegend(category, 0)).join("");
+        elements.categoryList.innerHTML = CATEGORY_OPTIONS.slice(0, 4).map((category) => categoryLegend(category, 0, 0)).join("");
         return;
     }
 
@@ -444,7 +498,7 @@ function renderCategoryBreakdown() {
     elements.categoryList.innerHTML = totals
         .filter((item) => item.amount > 0 || ["動画", "音楽", "制作", "その他"].includes(item.category))
         .slice(0, 5)
-        .map((item) => categoryLegend(item.category, item.amount))
+        .map((item) => categoryLegend(item.category, item.amount, activeTotal))
         .join("");
 }
 
@@ -598,12 +652,13 @@ function renderTable(subscriptions) {
     if (subscriptions.length === 0) {
         elements.tableBody.innerHTML = `
             <tr>
-                <td colspan="7">
+                <td colspan="8">
                     <div class="empty-state">条件に一致するサブスクはありません。</div>
                 </td>
             </tr>
         `;
         elements.tableFooter.textContent = "全0件のサービス";
+        renderBulkToolbar(subscriptions);
         return;
     }
 
@@ -619,6 +674,9 @@ function renderTable(subscriptions) {
 
         return `
             <tr class="${rowClass}">
+                <td>
+                    <input class="row-checkbox" type="checkbox" data-row-select="${item.id}" ${state.selectedIds.has(item.id) ? "checked" : ""} aria-label="${escapeHtml(item.serviceName)}を選択">
+                </td>
                 <td>
                     <div class="service-cell">
                         ${serviceLogo(item.serviceName)}
@@ -651,6 +709,7 @@ function renderTable(subscriptions) {
         `;
     }).join("");
     elements.tableFooter.textContent = `全${subscriptions.length}件のサービス`;
+    renderBulkToolbar(subscriptions);
 
     elements.tableBody.querySelectorAll("button[data-action]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -673,14 +732,87 @@ function renderTable(subscriptions) {
             }
         });
     });
+
+    elements.tableBody.querySelectorAll("[data-row-select]").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+            if (checkbox.checked) {
+                state.selectedIds.add(checkbox.dataset.rowSelect);
+            } else {
+                state.selectedIds.delete(checkbox.dataset.rowSelect);
+            }
+            renderBulkToolbar(subscriptions);
+        });
+    });
+}
+
+function renderBulkToolbar(visibleSubscriptions) {
+    const visibleIds = visibleSubscriptions.map((item) => item.id);
+    const selectedVisibleCount = visibleIds.filter((id) => state.selectedIds.has(id)).length;
+
+    elements.bulkSelectedCount.textContent = `${state.selectedIds.size}件を選択中`;
+    elements.bulkToolbar.classList.toggle("active", state.selectedIds.size > 0);
+    elements.selectAllCheckbox.checked = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+    elements.selectAllCheckbox.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+}
+
+function toggleAllVisibleRows() {
+    const visibleSubscriptions = getFilteredSubscriptions();
+    visibleSubscriptions.forEach((item) => {
+        if (elements.selectAllCheckbox.checked) {
+            state.selectedIds.add(item.id);
+        } else {
+            state.selectedIds.delete(item.id);
+        }
+    });
+    render();
+}
+
+function clearSelectedRows() {
+    state.selectedIds.clear();
+    render();
+}
+
+function bulkUpdateStatus(status) {
+    if (state.selectedIds.size === 0) {
+        return;
+    }
+
+    state.subscriptions = state.subscriptions.map((item) => {
+        if (!state.selectedIds.has(item.id)) {
+            return item;
+        }
+        return { ...item, status };
+    });
+    state.selectedIds.forEach((id) => state.savingIds.delete(id));
+    state.selectedIds.clear();
+    saveToStorage();
+    renderFilterOptions();
+    render();
 }
 
 function getFilteredSubscriptions() {
-    return [...state.subscriptions]
+    return sortSubscriptions([...state.subscriptions]
         .filter((item) => !state.filters.keyword || item.serviceName.toLowerCase().includes(state.filters.keyword))
         .filter((item) => !state.filters.category || item.category === state.filters.category)
-        .filter((item) => !state.filters.status || item.status === state.filters.status)
-        .sort((a, b) => safeDate(getDisplayRenewalDate(a.renewalDate, a.billingCycle)) - safeDate(getDisplayRenewalDate(b.renewalDate, b.billingCycle)));
+        .filter((item) => !state.filters.status || item.status === state.filters.status));
+}
+
+function sortSubscriptions(subscriptions) {
+    return subscriptions.sort((a, b) => {
+        if (state.sortOrder === "price-desc") {
+            return getMonthlyEquivalent(b) - getMonthlyEquivalent(a);
+        }
+        if (state.sortOrder === "price-asc") {
+            return getMonthlyEquivalent(a) - getMonthlyEquivalent(b);
+        }
+        if (state.sortOrder === "name-asc") {
+            return a.serviceName.localeCompare(b.serviceName, "ja");
+        }
+        if (state.sortOrder === "category-asc") {
+            return a.category.localeCompare(b.category, "ja") || a.serviceName.localeCompare(b.serviceName, "ja");
+        }
+        return safeDate(getDisplayRenewalDate(a.renewalDate, a.billingCycle)) - safeDate(getDisplayRenewalDate(b.renewalDate, b.billingCycle));
+    });
 }
 
 function renderFilterOptions() {
@@ -826,14 +958,15 @@ function getMonthlyEquivalent(subscription) {
     return Math.round(Number(subscription.monthlyPrice) / getBillingCycle(subscription.billingCycle).months);
 }
 
-function categoryLegend(category, amount) {
+function categoryLegend(category, amount, total = 0) {
+    const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
     return `
         <div class="category-row">
             <span>
                 <i style="background: ${getCategoryColor(category)}"></i>
                 ${escapeHtml(category)}
             </span>
-            <strong>${formatCurrency(amount)}</strong>
+            <strong>${formatCurrency(amount)} <small>${percent}%</small></strong>
         </div>
     `;
 }
@@ -922,6 +1055,31 @@ function nextPaymentText(subscriptions) {
 function clearSavingsSelection() {
     state.savingIds.clear();
     renderSavingsSimulator();
+}
+
+function showUndoToast(serviceName) {
+    window.clearTimeout(state.undoTimer);
+    elements.undoMessage.textContent = `「${serviceName}」を削除しました。`;
+    elements.undoToast.classList.add("show");
+    state.undoTimer = window.setTimeout(() => {
+        elements.undoToast.classList.remove("show");
+        state.lastDeleted = null;
+    }, 7000);
+}
+
+function undoDelete() {
+    if (!state.lastDeleted) {
+        return;
+    }
+
+    const { subscription, index } = state.lastDeleted;
+    state.subscriptions.splice(index, 0, subscription);
+    state.lastDeleted = null;
+    window.clearTimeout(state.undoTimer);
+    elements.undoToast.classList.remove("show");
+    saveToStorage();
+    renderFilterOptions();
+    render();
 }
 
 function exportCsv() {
