@@ -28,6 +28,20 @@ HTML / CSS / JavaScript で作成した、ローカル保存型のサブスク�
 - JavaScript
 - localStorage
 
+## ファイル構成
+
+```text
+sinsakai2026/
+├── index.html
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── app.js
+├── README.md
+└── .gitignore
+```
+
 ## 起動方法
 
 1. プロジェクト直下で以下を実行
