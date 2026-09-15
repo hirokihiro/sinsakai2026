@@ -1,6 +1,7 @@
 const STORAGE_KEY = "subscription-manager-items";
 const BUDGET_STORAGE_KEY = "subscription-manager-budget";
 const THEME_STORAGE_KEY = "subscription-manager-theme";
+const PREMIUM_STORAGE_KEY = "subscription-manager-premium-settings";
 const CATEGORY_OPTIONS = ["動画", "音楽", "学習", "クラウド", "ゲーム", "ニュース", "制作", "その他"];
 const STATUS_OPTIONS = ["利用中", "解約予定", "解約済み"];
 const BILLING_CYCLE_OPTIONS = [
@@ -10,6 +11,12 @@ const BILLING_CYCLE_OPTIONS = [
     { value: "yearly", label: "年額", months: 12 }
 ];
 const CSV_COLUMNS = ["serviceName", "category", "monthlyPrice", "billingCycle", "startDate", "renewalDate", "trialEndDate", "status", "memo"];
+const DEFAULT_PREMIUM_SETTINGS = {
+    autoSync: false,
+    smartAlert: true,
+    reminderDays: "7",
+    reportDay: "monday"
+};
 const CATEGORY_STYLES = {
     "動画": { color: "#f87171", className: "video" },
     "音楽": { color: "#14b8a6", className: "music" },
@@ -69,6 +76,7 @@ const state = {
     },
     sortOrder: "renewal-asc",
     monthlyBudget: loadBudget(),
+    premiumSettings: loadPremiumSettings(),
     editingId: null,
     detailId: null,
     savingIds: new Set(),
@@ -95,6 +103,12 @@ const elements = {
     exportCsvButton: document.querySelector("#export-csv-button"),
     importCsvInput: document.querySelector("#import-csv-input"),
     dataStatus: document.querySelector("#data-status"),
+    premiumForm: document.querySelector("#premium-form"),
+    autoSyncToggle: document.querySelector("#auto-sync-toggle"),
+    smartAlertToggle: document.querySelector("#smart-alert-toggle"),
+    premiumReminderDays: document.querySelector("#premium-reminder-days"),
+    premiumReportDay: document.querySelector("#premium-report-day"),
+    premiumStatus: document.querySelector("#premium-status"),
     savingsList: document.querySelector("#savings-list"),
     savingMonthlyTotal: document.querySelector("#saving-monthly-total"),
     savingYearlyTotal: document.querySelector("#saving-yearly-total"),
@@ -174,6 +188,7 @@ function bindEvents() {
     elements.clearBudgetButton.addEventListener("click", clearBudget);
     elements.exportCsvButton.addEventListener("click", exportCsv);
     elements.importCsvInput.addEventListener("change", importCsv);
+    elements.premiumForm.addEventListener("submit", savePremiumSettings);
     elements.closeDialogButton.addEventListener("click", closeFormDialog);
     elements.cancelButton.addEventListener("click", closeFormDialog);
     elements.closeDetailButton.addEventListener("click", closeDetailDialog);
@@ -231,6 +246,19 @@ function loadTheme() {
     return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
 }
 
+function loadPremiumSettings() {
+    const raw = localStorage.getItem(PREMIUM_STORAGE_KEY);
+    if (!raw) {
+        return { ...DEFAULT_PREMIUM_SETTINGS };
+    }
+
+    try {
+        return { ...DEFAULT_PREMIUM_SETTINGS, ...JSON.parse(raw) };
+    } catch {
+        return { ...DEFAULT_PREMIUM_SETTINGS };
+    }
+}
+
 function normalizeSubscription(subscription) {
     return {
         ...subscription,
@@ -252,6 +280,10 @@ function saveBudget() {
 
 function saveTheme() {
     localStorage.setItem(THEME_STORAGE_KEY, state.theme);
+}
+
+function savePremiumSettingsToStorage() {
+    localStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(state.premiumSettings));
 }
 
 function resetToSampleData() {
@@ -294,6 +326,18 @@ function clearBudget() {
     elements.monthlyBudget.value = "";
     saveBudget();
     renderBudgetAlert();
+}
+
+function savePremiumSettings(event) {
+    event.preventDefault();
+    state.premiumSettings = {
+        autoSync: elements.autoSyncToggle.checked,
+        smartAlert: elements.smartAlertToggle.checked,
+        reminderDays: elements.premiumReminderDays.value,
+        reportDay: elements.premiumReportDay.value
+    };
+    savePremiumSettingsToStorage();
+    renderPremiumSettings(true);
 }
 
 function toggleTheme() {
@@ -458,6 +502,7 @@ function render() {
     renderUpcoming();
     renderBudgetAlert();
     renderTrialReminders();
+    renderPremiumSettings();
     renderSavingsSimulator();
     renderTable(filtered);
 }
@@ -600,6 +645,24 @@ function renderTrialReminders() {
             </article>
         `;
     }).join("");
+}
+
+function renderPremiumSettings(saved = false) {
+    const settings = state.premiumSettings;
+    elements.autoSyncToggle.checked = settings.autoSync;
+    elements.smartAlertToggle.checked = settings.smartAlert;
+    elements.premiumReminderDays.value = settings.reminderDays;
+    elements.premiumReportDay.value = settings.reportDay;
+
+    const reportDayLabel = {
+        monday: "月曜日",
+        friday: "金曜日",
+        sunday: "日曜日"
+    }[settings.reportDay];
+    const enabledCount = [settings.autoSync, settings.smartAlert].filter(Boolean).length;
+    const savedPrefix = saved ? "保存しました。 " : "";
+
+    elements.premiumStatus.textContent = `${savedPrefix}${enabledCount}件の自動化が有効です。通知は${settings.reminderDays}日前、週次レポートは${reportDayLabel}に作成します。`;
 }
 
 function renderSavingsSimulator() {

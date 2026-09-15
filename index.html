@@ -23,14 +23,15 @@
                 <a href="#upcoming-section"><span class="nav-icon">C</span>カレンダー</a>
                 <a href="#summary-section"><span class="nav-icon">R</span>統計・レポート</a>
                 <a href="#savings-section"><span class="nav-icon">S</span>節約試算</a>
+                <a href="#premium-section"><span class="nav-icon">P</span>プレミアム</a>
                 <a href="#data-section"><span class="nav-icon">D</span>データ管理</a>
             </nav>
 
-            <section class="upgrade-panel" aria-label="便利機能">
-                <span class="crown">Tools</span>
-                <h2>データを守る</h2>
-                <p>CSVバックアップ、予算アラート、無料体験リマインダーを利用できます。</p>
-                <a class="btn btn-secondary" href="#data-section">データ管理へ <span aria-hidden="true">-&gt;</span></a>
+            <section class="upgrade-panel" aria-label="プレミアムプラン">
+                <span class="crown">Premium</span>
+                <h2>もっと便利に</h2>
+                <p>自動取得、スマート通知、週次レポートで支払い管理を強化できます。</p>
+                <a class="btn btn-secondary" href="#premium-section">プランを見る <span aria-hidden="true">-&gt;</span></a>
             </section>
         </aside>
 
@@ -135,6 +136,57 @@
                     </div>
                 </div>
                 <div id="savings-list" class="savings-list"></div>
+            </section>
+
+            <section class="panel premium-panel" id="premium-section">
+                <div class="premium-layout">
+                    <div>
+                        <p class="section-label">Premium</p>
+                        <h2>プレミアム機能</h2>
+                        <p class="premium-lead">支払いの見落としを減らすための自動化オプションをまとめて管理できます。</p>
+                        <div class="premium-feature-list">
+                            <span>自動支出取得</span>
+                            <span>スマート通知</span>
+                            <span>週次レポート</span>
+                        </div>
+                    </div>
+                    <form class="premium-settings" id="premium-form">
+                        <label class="switch-row">
+                            <input type="checkbox" id="auto-sync-toggle">
+                            <span>
+                                <strong>自動支出取得</strong>
+                                <small>カード明細からサブスク候補を検出する想定の機能です。</small>
+                            </span>
+                        </label>
+                        <label class="switch-row">
+                            <input type="checkbox" id="smart-alert-toggle">
+                            <span>
+                                <strong>スマート通知</strong>
+                                <small>更新日、無料体験、予算超過をまとめて通知します。</small>
+                            </span>
+                        </label>
+                        <div class="premium-options">
+                            <label>
+                                通知タイミング
+                                <select id="premium-reminder-days">
+                                    <option value="3">3日前</option>
+                                    <option value="7">7日前</option>
+                                    <option value="14">14日前</option>
+                                </select>
+                            </label>
+                            <label>
+                                週次レポート
+                                <select id="premium-report-day">
+                                    <option value="monday">月曜日</option>
+                                    <option value="friday">金曜日</option>
+                                    <option value="sunday">日曜日</option>
+                                </select>
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" type="submit">設定を保存</button>
+                        <p class="premium-status" id="premium-status">プレミアム設定は未保存です。</p>
+                    </form>
+                </div>
             </section>
 
             <section class="panel table-panel" id="subscription-section">
