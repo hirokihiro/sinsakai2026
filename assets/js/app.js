@@ -64,6 +64,30 @@ const sampleSubscriptions = [
         trialEndDate: "",
         status: "利用中",
         memo: "デザイン作業用"
+    },
+    {
+        id: crypto.randomUUID(),
+        serviceName: "Amazon Prime",
+        category: "動画",
+        monthlyPrice: 5900,
+        billingCycle: "yearly",
+        startDate: "2026-03-01",
+        renewalDate: "2027-03-01",
+        trialEndDate: "",
+        status: "利用中",
+        memo: "年額プラン"
+    },
+    {
+        id: crypto.randomUUID(),
+        serviceName: "Duolingo",
+        category: "学習",
+        monthlyPrice: 2400,
+        billingCycle: "quarterly",
+        startDate: "2026-08-01",
+        renewalDate: "2026-11-01",
+        trialEndDate: "2026-09-17",
+        status: "利用中",
+        memo: "語学学習用"
     }
 ];
 
@@ -231,7 +255,12 @@ function loadSubscriptions() {
 
     try {
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.map(normalizeSubscription) : [...sampleSubscriptions];
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleSubscriptions));
+            return [...sampleSubscriptions];
+        }
+
+        return parsed.map(normalizeSubscription);
     } catch {
         return [...sampleSubscriptions];
     }
