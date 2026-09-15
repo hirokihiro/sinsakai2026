@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubManage | サブスクリプション管理</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <a class="brand" href="#" aria-label="SubManage ホーム">
+                <span class="brand-mark">S</span>
+                <span>
+                    <strong>SubManage</strong>
+                    <small>サブスクを、シンプルに。</small>
+                </span>
+            </a>
+
+            <nav class="side-nav" aria-label="メインナビゲーション">
+                <a class="active" href="#"><span class="nav-icon">H</span>ダッシュボード</a>
+                <a href="#subscription-section"><span class="nav-icon">L</span>サブスク一覧</a>
+                <a href="#upcoming-section"><span class="nav-icon">C</span>カレンダー</a>
+                <a href="#summary-section"><span class="nav-icon">R</span>統計・レポート</a>
+                <a href="#savings-section"><span class="nav-icon">S</span>節約試算</a>
+                <a href="#data-section"><span class="nav-icon">D</span>データ管理</a>
+            </nav>
+
+            <section class="upgrade-panel" aria-label="プレミアムプラン">
+                <span class="crown">Premium</span>
+                <h2>もっと便利に</h2>
+                <p>プレミアムプランで自動取得や通知機能を利用できます。</p>
+                <button class="btn btn-secondary" type="button">プランを見る <span aria-hidden="true">-&gt;</span></button>
+            </section>
+        </aside>
+
+        <main class="page-shell">
+            <header class="topbar">
+                <div class="hero-copy">
+                    <p class="welcome">おかえりなさい 👋</p>
+                    <h1>サブスクリプション管理</h1>
+                    <p>契約中のサービスと次回更新を管理して、無駄な支払いをなくしましょう。</p>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-action" type="button" aria-label="通知">!</button>
+                    <button class="user-avatar" type="button" aria-label="ユーザー">U</button>
+                    <button class="btn btn-primary" id="open-form-button" type="button">＋ 新規登録</button>
+                </div>
+            </header>
+
+            <section class="dashboard-grid" id="summary-section">
+                <article class="panel spend-panel">
+                    <div class="summary-main">
+                        <span class="wallet-icon">¥</span>
+                        <div>
+                            <p class="section-label">月額の合計</p>
+                            <strong id="monthly-total">0円</strong>
+                            <p><span id="yearly-total">0円</span> ・ <span id="subscription-count">0件</span>のサービス</p>
+                        </div>
+                        <span class="trend-badge">↓ 昨月比 -12%</span>
+                    </div>
+                    <div class="category-breakdown">
+                        <div class="donut-chart" id="category-chart" aria-label="カテゴリ別支出グラフ"></div>
+                        <div class="category-list" id="category-list"></div>
+                    </div>
+                </article>
+
+                <article class="panel upcoming-panel" id="upcoming-section">
+                    <div class="panel-header">
+                        <h2>今後の支払い</h2>
+                        <a href="#subscription-section">すべて見る -&gt;</a>
+                    </div>
+                    <div id="upcoming-list" class="payment-list"></div>
+                    <div id="seven-day-note" class="success-note"></div>
+                </article>
+            </section>
+
+            <section class="insight-grid">
+                <article class="panel budget-panel" id="budget-section">
+                    <div class="panel-header">
+                        <h2>月予算アラート</h2>
+                        <button class="btn btn-secondary compact-reset" id="clear-budget-button" type="button">解除</button>
+                    </div>
+                    <form class="budget-form" id="budget-form">
+                        <label>
+                            月の予算
+                            <input type="number" id="monthly-budget" min="0" placeholder="例: 10000">
+                        </label>
+                        <button class="btn btn-primary" type="submit">保存</button>
+                    </form>
+                    <div class="budget-meter" aria-label="月予算の使用率">
+                        <span id="budget-meter-bar"></span>
+                    </div>
+                    <div id="budget-status" class="budget-status"></div>
+                </article>
+
+                <article class="panel trial-panel" id="trial-section">
+                    <div class="panel-header">
+                        <h2>無料体験リマインダー</h2>
+                        <a href="#subscription-section">一覧へ -&gt;</a>
+                    </div>
+                    <div id="trial-list" class="trial-list"></div>
+                </article>
+
+                <article class="panel data-panel" id="data-section">
+                    <div class="panel-header">
+                        <h2>データ管理</h2>
+                    </div>
+                    <div class="data-actions">
+                        <button class="btn btn-secondary" id="export-csv-button" type="button">CSV出力</button>
+                        <label class="btn btn-secondary import-button">
+                            CSV読込
+                            <input type="file" id="import-csv-input" accept=".csv,text/csv">
+                        </label>
+                    </div>
+                    <p id="data-status" class="data-status">登録データをバックアップできます。</p>
+                </article>
+            </section>
+
+            <section class="panel savings-panel" id="savings-section">
+                <div class="panel-header">
+                    <h2>節約シミュレーション</h2>
+                    <button class="btn btn-secondary compact-reset" id="clear-savings-button" type="button">選択解除</button>
+                </div>
+                <div class="savings-summary">
+                    <div>
+                        <p class="section-label">解約した場合の節約額</p>
+                        <strong id="saving-monthly-total">¥0</strong>
+                        <span>/ 月</span>
+                    </div>
+                    <div>
+                        <p>年間では <strong id="saving-yearly-total">¥0</strong></p>
+                        <small id="saving-selected-count">0件を選択中</small>
+                    </div>
+                </div>
+                <div id="savings-list" class="savings-list"></div>
+            </section>
+
+            <section class="panel table-panel" id="subscription-section">
+                <div class="table-toolbar">
+                    <div class="title-row">
+                        <span class="table-icon">L</span>
+                        <h2>サブスクリプション一覧</h2>
+                    </div>
+                    <form id="filter-form" class="filter-form">
+                        <input type="text" id="search-keyword" placeholder="サービス名で検索...">
+                        <select id="filter-category">
+                            <option value="">カテゴリを選択</option>
+                        </select>
+                        <select id="filter-status">
+                            <option value="">利用状況を選択</option>
+                        </select>
+                        <button class="btn btn-secondary" type="button" id="clear-filter-button">クリア</button>
+                    </form>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>サービス</th>
+                                <th>カテゴリ</th>
+                                <th>料金</th>
+                                <th>支払いサイクル</th>
+                                <th>次回更新日</th>
+                                <th>ステータス</th>
+                                <th aria-label="操作"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscription-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <p id="table-footer"></p>
+                    <button class="btn btn-secondary compact-reset" id="reset-sample-button" type="button">サンプル再読み込み</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="subscription-dialog" class="app-dialog">
+        <form id="subscription-form" class="subscription-form" method="dialog" novalidate>
+            <div class="dialog-header">
+                <div>
+                    <p class="section-label">Editor</p>
+                    <h2 id="dialog-title">サブスク登録</h2>
+                </div>
+                <button class="icon-button" id="close-dialog-button" type="button" aria-label="閉じる">×</button>
+            </div>
+
+            <input type="hidden" id="subscription-id">
+
+            <label>
+                サービス名
+                <input type="text" id="service-name" maxlength="100">
+                <span class="field-error" id="error-service-name"></span>
+            </label>
+
+            <label>
+                カテゴリ
+                <select id="category"></select>
+                <span class="field-error" id="error-category"></span>
+            </label>
+
+            <label>
+                支払い金額
+                <input type="number" id="monthly-price" min="0">
+                <span class="field-error" id="error-monthly-price"></span>
+            </label>
+
+            <label>
+                支払いサイクル
+                <select id="billing-cycle"></select>
+                <span class="field-error" id="error-billing-cycle"></span>
+            </label>
+
+            <label>
+                契約開始日
+                <input type="date" id="start-date">
+            </label>
+
+            <label>
+                次回更新日
+                <input type="date" id="renewal-date">
+                <span class="field-error" id="error-renewal-date"></span>
+            </label>
+
+            <label>
+                無料体験終了日
+                <input type="date" id="trial-end-date">
+            </label>
+
+            <label>
+                利用状況
+                <select id="status"></select>
+                <span class="field-error" id="error-status"></span>
+            </label>
+
+            <label class="full-span">
+                メモ
+                <textarea id="memo" rows="4" maxlength="500"></textarea>
+            </label>
+
+            <div class="form-actions full-span">
+                <button class="btn btn-primary" type="submit" id="save-button">登録</button>
+                <button class="btn btn-secondary" type="button" id="cancel-button">戻る</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="detail-dialog" class="app-dialog">
+        <div class="detail-sheet">
+            <div class="dialog-header">
+                <div>
+                    <p class="section-label">Detail</p>
+                    <h2 id="detail-title">サブスク詳細</h2>
+                </div>
+                <button class="icon-button" id="close-detail-button" type="button" aria-label="閉じる">×</button>
+            </div>
+            <div id="detail-body" class="detail-grid"></div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="detail-edit-button" type="button">編集</button>
+                <button class="btn btn-primary" id="detail-close-button" type="button">閉じる</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
