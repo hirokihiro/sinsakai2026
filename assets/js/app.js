@@ -107,6 +107,7 @@ const state = {
     selectedIds: new Set(),
     lastDeleted: null,
     undoTimer: null,
+    restoredSamples: Boolean(window.__submanageRestoredSamples),
     theme: loadTheme()
 };
 
@@ -201,6 +202,9 @@ function initialize() {
     renderFilterOptions();
     bindEvents();
     render();
+    if (state.restoredSamples) {
+        elements.dataStatus.textContent = "サンプルデータを復元しました。";
+    }
 }
 
 function bindEvents() {
@@ -257,6 +261,7 @@ function loadSubscriptions() {
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed) || parsed.length === 0) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleSubscriptions));
+            stateRestoredSamples();
             return [...sampleSubscriptions];
         }
 
@@ -264,6 +269,10 @@ function loadSubscriptions() {
     } catch {
         return [...sampleSubscriptions];
     }
+}
+
+function stateRestoredSamples() {
+    window.__submanageRestoredSamples = true;
 }
 
 function loadBudget() {
